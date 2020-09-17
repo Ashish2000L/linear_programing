@@ -103,8 +103,8 @@ class simplex:
                     basic_variable.append('S' + str(k + 1))
                     opti_F.append(0)
                 elif j=='>=':
-                    for l in range(k):
-                        coeff_variable[k].append(0)
+                    #for l in range(k):
+                        #coeff_variable[k].append(0)
                     coeff_variable[k].append(-1)
                     opti_F.insert(k,0)
                     opti_F.append(-1)
@@ -339,7 +339,7 @@ class simplex:
                         self.leaving_indx=i+1
         elif type=='max':
 
-            l = len(self.main_matrix)
+            l = len(self.main_matrix[0])-1
             for k in self.main_matrix:
                 x.append(k[self.entering_indx])
                 b.append(k[l])
@@ -356,7 +356,7 @@ class simplex:
 
         elif type=='min':
 
-            l = len(self.main_matrix) - 1
+            l = len(self.main_matrix[0]) - 1
             for k in self.main_matrix:
                 x.append(k[self.entering_indx])
                 b.append(k[l])

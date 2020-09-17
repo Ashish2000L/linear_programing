@@ -1,4 +1,5 @@
-'''created by: Ashish Kumar
+'''
+created by: Ashish Kumar
 created on: 26/08/2020
 '''
 '''This package will help in solving Linear programming problem for n-number of constrains.
@@ -94,7 +95,7 @@ class graphical_method:
         for i in range(max):
             plt.plot(X[i], Y[i], colours[i], label=f"equation {i + 1}", linewidth=2)
 
-        plt.title('equation graphs ')
+        plt.title('LPP Graphical Solution ')
         plt.xlabel('x-axis')
         plt.ylabel('y-axis')
         plt.legend()
@@ -293,3 +294,7 @@ class graphical_method:
                 continue
 
         print('\n\nOptimal Solution is: {0:.2f} at X={1:.2f} and Y={2:.2f} '.format(self.opt_res,self.at_x,self.at_y))
+
+        def final_optimize():
+            print('\n\nOptimal Solution is: {0:.2f} at X={1:.2f} and Y={2:.2f} '.format(self.opt_res, self.at_x,
+                                                                                        self.at_y))
