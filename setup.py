@@ -1,15 +1,14 @@
-from setuptools import setup, find_packages
-import pathlib
+import setuptools
 
-here = pathlib.Path(__file__).parent.resolve()
-long_description = (here / 'README.txt').read_text(encoding='utf-8')
+with open("README.txt", "r") as fh:
+    long_description = fh.read()
 
-setup(
-    name="linear_prog",
+setuptools.setup(
+    name="lnrprog",
     version="1.0.0",
     description='A project for solving linear programming problem',
     author='Ashish Kumar',
-    packages=find_packages(where='src'),
+    long_description=long_description,
+    url='https://github.com/Ashish2000L/linear_programing',
+    packages=setuptools.find_packages(),
     )
- #"Django >= 1.1.1",
- #"pytest",
