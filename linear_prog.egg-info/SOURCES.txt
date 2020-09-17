@@ -1,0 +1,10 @@
+LICENSE.txt
+MANIFEST.in
+README.txt
+pyproject.toml
+setup.cfg
+setup.py
+linear_prog.egg-info/PKG-INFO
+linear_prog.egg-info/SOURCES.txt
+linear_prog.egg-info/dependency_links.txt
+linear_prog.egg-info/top_level.txt
