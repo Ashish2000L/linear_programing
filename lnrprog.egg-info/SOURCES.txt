@@ -10,4 +10,5 @@ lnrprog/two_phase_simplex.py
 lnrprog.egg-info/PKG-INFO
 lnrprog.egg-info/SOURCES.txt
 lnrprog.egg-info/dependency_links.txt
+lnrprog.egg-info/requires.txt
 lnrprog.egg-info/top_level.txt

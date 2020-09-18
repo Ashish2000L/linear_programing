@@ -9,6 +9,8 @@ user itself as to find the relevent solution or details from the table.
 @:exception
 Solution in this package having error of approx +-0.010 value in the solution, so take round the final answer
 with in this range.
+
+If you find any problem in this package feel free to add issue here:- https://github.com/Ashish2000L/linear_programing
 '''
 class simplex:
     '''
@@ -284,10 +286,11 @@ class simplex:
         matrix=self.optimize_final
 
         f=[]
+        self.entering_indx=None
         if type=='1_phase':
             max = 0
             for i,v in enumerate(matrix):
-                if i<len(self.coeff_of_var[0])-1:
+                if i<len(self.coeff_of_var[0]):
                     f.append(v)
 
             for i,v in enumerate(f):
@@ -322,6 +325,7 @@ class simplex:
         x=[]
         b=[]
         min = 10000
+        self.leaving_indx=None
         if type=='1_phase':
             min = 10000
             l=len(self.optimize_final)-1

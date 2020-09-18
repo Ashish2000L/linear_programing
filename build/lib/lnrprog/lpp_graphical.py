@@ -1,10 +1,14 @@
 '''
 created by: Ashish Kumar
 created on: 26/08/2020
-'''
-'''This package will help in solving Linear programming problem for n-number of constrains.
+
+
+This package will help in solving Linear programming problem for n-number of constrains.
 This package shows the graphical representation of the constrains and showing the optimal solution as requested by the 
-user. By this we can optimize solution as maximization type and minimization type.'''
+user. By this we can optimize solution as maximization type and minimization type.
+
+If you find any problem in this package feel free to add issue here:- https://github.com/Ashish2000L/linear_programing
+'''
 
 import matplotlib.pyplot as plt
 from matplotlib import style
@@ -12,15 +16,20 @@ import numpy as np
 style.use("ggplot")
 colours=['r','g','c']
 
-'''Write proper 2d list for the constrains
-i.e: If the constrains are 2x+3y<=5 and 3x+4y>=6
-        so the list should be [[2,3,'<=',5],[3,4,'>=',6]]'''
-
 #only two type is there 'min' and 'max', default is max
 
 class graphical_method:
-    #constructor
-    def __init__(self,number_of_constrains,type='max',optimize_fn=['coeff-X','coeff-Y'],constrains=None):
+    '''
+    @:param
+    number_of_constrains:int -> This is the number of constrains in the equation
+    type:str -> This is type i.e max(Maximization) and min(Minimization)
+    optimize_fn:list -> This is a list in which the coeff of optimize function is needed, since this is
+                        a graphical method so coefficient of x,y is neede in the list only
+    constrains:list -> This is a 2D list
+                        i.e: If the constrains are 2x+3y<=5 and 3x+4y>=6
+                            so the list should be [[2,3,'<=',5],[3,4,'>=',6]]
+    '''
+    def __init__(self,number_of_constrains:int,type:str,optimize_fn:list=['coeff-X','coeff-Y'],constrains:list=None):
         self.number_of_constrains=number_of_constrains
         self.equation=[]
         self.itr=0
