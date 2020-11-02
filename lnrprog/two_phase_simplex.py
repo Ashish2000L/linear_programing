@@ -1,3 +1,4 @@
+import numpy as np
 '''
 created by:Ashish Kumar
 created on:15/09/20
@@ -12,7 +13,7 @@ with in this range.
 
 If you find any problem in this package feel free to add issue here:- https://github.com/Ashish2000L/linear_programing
 '''
-class simplex:
+class TPsimplex:
     '''
     @:param
     No_of_constrains:int->  This is the number of equations in the problem
@@ -23,10 +24,10 @@ class simplex:
     Optimize_equation:list-> This is you optimize equation
     '''
 
-    def __init__(self,No_of_constrains:int,Number_of_costCoeff_in_equation:int,Optimize_type:str,equation:list,optimize_equation:list):
+    def __init__(self,No_of_constrains:int,Number_of_costCoeff_in_equation:int,Optimize_type:str,equation:list,Optimize_equation:list):
         self.number_of_constrains=No_of_constrains
         self.equation=equation
-        self.optimize_fn=optimize_equation
+        self.optimize_fn=Optimize_equation
         self.number_of_variables=Number_of_costCoeff_in_equation
         self.coeff_of_var=[]
         self.additional_var=[]
@@ -46,7 +47,7 @@ class simplex:
     def __check_equation(self):
 
         if self.number_of_constrains!=len(self.equation):
-            raise ValueError("Number of Constrains does not match with given number of equations ")
+            raise ValueError("\nNumber of Constrains does not match with given number of equations ")
         elif self.optimize_fn is None:
             raise AssertionError("Optimize_equation cannot be null")
         elif len(self.optimize_fn)!=self.number_of_variables:
@@ -91,7 +92,14 @@ class simplex:
                 additional_varialbe[k].append(0)
             k+=1
 
+        count = 0
+        for i in self.equation:
+            for j in i:
+                if j == '>=':
+                    count += 1
+                    
         k=0
+        num=0
         for i in self.equation:
             coeff_variable.append([])
             var = 1
@@ -105,9 +113,15 @@ class simplex:
                     basic_variable.append('S' + str(k + 1))
                     opti_F.append(0)
                 elif j=='>=':
+                    num+=1
                     #for l in range(k):
                         #coeff_variable[k].append(0)
+                    if num > 1:
+                        for i in range(num - 1):
+                            coeff_variable[k].append(0)
                     coeff_variable[k].append(-1)
+                    for i in range(count - num):
+                        coeff_variable[k].append(0)
                     opti_F.insert(k,0)
                     opti_F.append(-1)
                     additional_varialbe[k].pop(k)
@@ -194,7 +208,10 @@ class simplex:
         print('\r')
         for i in whole_matrix:
             for j in i:
-                print(j, end='  ')
+                try:
+                    print(round(j,3), end='  ')
+                except:
+                    print(j, end='  ')
             print('\r')
 
 
@@ -241,9 +258,9 @@ class simplex:
             print(self.basic_var[p],end='  ')
             for j in i:
                 if j>=0:
-                    print(j,end='  ')
+                    print(round(j,3),end='  ')
                 elif j<0:
-                    print(j,end='  ')
+                    print(round(j,3),end='  ')
             p+=1
             print()
 
@@ -254,6 +271,10 @@ class simplex:
             self.__find_entry_indx()
             self.__find_leaving_indx()
             self.__set_enter_and_leave_val()
+
+            if self.itr>100:
+                raise TimeoutError("Too many iteration found!")
+
         print('\n\nPHASE-2\n')
         self.__process_simplex_phase_2()
 
@@ -320,6 +341,19 @@ class simplex:
                     self.entering_indx = i
 
 
+    def __check_for_other_alternative(self,min:int):
+
+        ln=len(self.main_matrix[0])-1
+        for i,v in enumerate(self.basic_var):
+            b = self.main_matrix[i][ln]
+            x = self.main_matrix[i][self.entering_indx]
+            if v in self.artificial_var:
+                if x!=0:
+                    if (float(b/x)==min):
+                        self.leaving_indx=i
+
+
+
     def __find_leaving_indx(self, type='1_phase'):
 
         x=[]
@@ -330,6 +364,8 @@ class simplex:
             min = 10000
             l=len(self.optimize_final)-1
             for k in self.main_matrix:
+                if self.entering_indx==None:
+                    raise Exception("\nNo solution Found!")
                 x.append(k[self.entering_indx])
                 b.append(k[l])
 
@@ -341,10 +377,15 @@ class simplex:
                     if m<min:
                         min=m
                         self.leaving_indx=i+1
+
+            self.__check_for_other_alternative(min)
+
         elif type=='max':
 
             l = len(self.main_matrix[0])-1
             for k in self.main_matrix:
+                if self.entering_indx == None:
+                    raise Exception("\nNo solution Found!")
                 x.append(k[self.entering_indx])
                 b.append(k[l])
 
@@ -362,6 +403,8 @@ class simplex:
 
             l = len(self.main_matrix[0]) - 1
             for k in self.main_matrix:
+                if self.entering_indx == None:
+                    raise Exception("\nNo solution Found!")
                 x.append(k[self.entering_indx])
                 b.append(k[l])
 
@@ -376,16 +419,17 @@ class simplex:
                         self.leaving_indx = i + 1
 
 
-        #print(min,self.leaving_indx,self.entering_indx)
-
-
     def __set_enter_and_leave_val(self):
 
         temp_index=0
         temp_list1=[]
         temp_list2=[]
 
+        if self.entering_indx==None:
+            raise Exception("No solution Found")
         enter=self.variable[self.entering_indx+1]
+        if self.leaving_indx==None:
+            raise Exception("Unbounded Solution Found!!")
         leave=self.basic_var[self.leaving_indx]
         self.basic_var.pop(self.leaving_indx)
         self.basic_var.insert(self.leaving_indx,enter)
@@ -406,7 +450,7 @@ class simplex:
 
         for i,v in enumerate(self.main_matrix[self.leaving_indx]):
             if i!=self.entering_indx:
-                self.main_matrix[self.leaving_indx][i]=round(float(v/k),3)
+                self.main_matrix[self.leaving_indx][i]=float(v/k)
 
         temp_leav_val_list=self.main_matrix[self.leaving_indx]
 
@@ -415,7 +459,7 @@ class simplex:
                 m=temp_list2[i]*-1
                 for k,j in enumerate(v):
                     if k !=self.entering_indx:
-                        self.main_matrix[i][k]=float(format(j+(m*temp_leav_val_list[k]),'.3f'))
+                        self.main_matrix[i][k]=float(j+(m*temp_leav_val_list[k]))
 
         self.itr+=1
         print('\n\nITERATION {0}\n'.format(self.itr))
@@ -432,8 +476,6 @@ class simplex:
                     pop_indx.append(length-1)
                     self.variable.pop(length)
             length-=1
-
-
 
         for i,v in enumerate(self.main_matrix):
             for j in pop_indx:
@@ -485,7 +527,7 @@ class simplex:
                 if j==i[1]:
                     k=F[i[0]]*-1
                     for x,y in enumerate(v):
-                        F[x]=round(F[x]+(y*k),3)
+                        F[x]=F[x]+(y*k)
 
         self.main_matrix[0]=F
 
@@ -499,3 +541,29 @@ class simplex:
             self.__find_entry_indx(type=self.optimize_type)
             self.__find_leaving_indx(type=self.optimize_type)
             self.__set_enter_and_leave_val()
+            if self.itr>100:
+                raise TimeoutError("Too many iteration found")
+
+
+    def Optimal_Solution(self)-> "numpy array":
+
+        ln=len(self.main_matrix[0])-1
+        if self.main_matrix[0][ln]>0:
+            print("\n\n\nSOLUTION:\n")
+            self.__print_matrix()
+            final_solution=[['F',round(self.main_matrix[0][ln],3)]]
+            
+            inserted_var=[]
+            cost_coeff_var=['X'+str(i+1) for i in range(self.number_of_variables)]
+            for i,v in enumerate(self.basic_var):
+                if v in cost_coeff_var:
+                    final_solution.append([v,round(self.main_matrix[i][ln],3)])
+                    inserted_var.append(v)
+
+            for i in cost_coeff_var:
+                if i not in inserted_var:
+                    final_solution.append([i, round(0, 3)])
+
+            return np.asarray(final_solution)
+        else:
+            raise Exception("\n\nEither the equation have not fisible solution or an error occured.\n Please staceback to look for the issue, if you find this solution wrong you can create an issue here: \n https://github.com/Ashish2000L/linear_programing")
