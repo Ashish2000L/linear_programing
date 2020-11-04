@@ -22,12 +22,15 @@ class TPsimplex:
     equation:list->  This is the quation in the format [coeffs of cost cofficients,Inequality(string),rhs of the string], must be a multidimensional string.
                 If the coefficient of any cost coefficient is 0 in any equation, mention it in the same order
     Optimize_equation:list-> This is you optimize equation
+
+    @Exit_codes
+    500 -> Looks like he is not getting any leaving variable
     '''
 
-    def __init__(self,No_of_constrains:int,Number_of_costCoeff_in_equation:int,Optimize_type:str,equation:list,Optimize_equation:list):
+    def __init__(self,No_of_constrains:int,Number_of_costCoeff_in_equation:int,Optimize_type:str,equation:list,optimize_equation:list,write:bool=False,file_name:str=None):
         self.number_of_constrains=No_of_constrains
         self.equation=equation
-        self.optimize_fn=Optimize_equation
+        self.optimize_fn=optimize_equation
         self.number_of_variables=Number_of_costCoeff_in_equation
         self.coeff_of_var=[]
         self.additional_var=[]
@@ -41,38 +44,81 @@ class TPsimplex:
         self.leaving_indx=0
         self.itr=0
         self.optimize_type=Optimize_type
+        self.do_write=write
+        self.file_name=file_name
+        self.error=False
+        self.msg=""
         self.__check_equation()
+        #return self.Optimal_Solution()
 
 
     def __check_equation(self):
 
-        if self.number_of_constrains!=len(self.equation):
-            raise ValueError("\nNumber of Constrains does not match with given number of equations ")
+        if str(type(self.equation)) != "<class 'list'>":
+            self.msg = '\nList required, found {0}'.format(str(type(self.equation)))
+            self.error = True
+            return
+
+        elif self.number_of_constrains!=len(self.equation):
+            self.msg="\nNumber of Constrains does not match with given number of equations "
+            self.error=True
+            return
+
         elif self.optimize_fn is None:
-            raise AssertionError("Optimize_equation cannot be null")
+            self.msg="\nOptimize_equation cannot be null"
+            self.error=True
+            return
+
         elif len(self.optimize_fn)!=self.number_of_variables:
-            raise ValueError('Length of coefficient in optimize function must be equal to number of variables\n'
-                             'i.e if any coefficient having 0 coefficient, mention it as 0 instead of leaving that '
-                             'blank in proper order')
+            self.msg='\nLength of coefficient in optimize function must be equal to number of variables\ni.e if any coefficient having 0 coefficient, mention it as 0 instead of leaving that blank in proper order'
+            self.error=True
+            return
+
         elif str(type(self.optimize_type))!="<class 'str'>":
-            raise TypeError("Optimize_type must me string, given {0}".format(type(self.optimize_type)))
+            self.msg="\nOptimize_type must me string, given {0}".format(type(self.optimize_type))
+            self.error=True
+            return
+
         elif (self.optimize_type!='max') and (self.optimize_type!='min'):
-            raise ValueError("Optimize_type must be either 'max'(Maximation) or 'min'(Minimization) type only")
+            self.msg="\nOptimize_type must be either 'max'(Maximation) or 'min'(Minimization) type only"
+            self.error=True
+            return
 
         for i in self.equation:
             if str(type(i))!="<class 'list'>":
-                raise TypeError('List required, found {0}'.format(str(type(i))))
-            elif len(i)==0:
-                raise AssertionError('Coefficient of equation cannot be null')
-            elif len(i)!=self.number_of_variables+2:
-                raise ValueError('Inappropriate Equation found, please provide the equation in the given format \n'
-                                 'i.e [Coefficient_of_variables,"Inequality",RHS_Coefficient_of_equation]')
-            elif str(type(i[self.number_of_variables]))!="<class 'str'>":
-                raise ValueError('Inequality must be string in given equation found {0}'.format(str(type(i[self.number_of_variables+1]))))
-            elif i[self.number_of_variables] not in ['<=','>=','=']:
-                raise ValueError("Only '<=','>=','=' type of inequality is allowed found {0}".format(i[self.number_of_variables]))
+                self.msg='\nList required, found {0}'.format(str(type(i)))
+                self.error=True
+                return
 
-        self.__make_new_variables()
+            elif len(i)==0:
+                self.msg='\nCoefficient of equation cannot be null'
+                self.error=True
+                return
+
+            elif len(i)!=self.number_of_variables+2:
+                self.error=True
+                self.msg='\nInappropriate Equation found, please provide the equation in the given format \ni.e [Coefficient_of_variables,"Inequality",RHS_Coefficient_of_equation]'
+                return
+
+            elif str(type(i[self.number_of_variables]))!="<class 'str'>":
+                self.msg='\nInequality must be string in given equation found {0}'.format(str(type(i[self.number_of_variables+1])))
+                self.error=True
+                return
+
+            elif i[self.number_of_variables] not in ['<=','>=','=']:
+                self.msg="\nOnly '<=','>=','=' type of inequality is allowed found {0}".format(i[self.number_of_variables])
+                self.error=True
+                return
+
+        if self.do_write and self.file_name==None:
+            self.msg="\nFile name is required if the the write is set to true"
+            self.error=True
+            return
+        if not self.error :
+            self.__make_new_variables()
+        else:
+            return
+
 
 
     def __make_new_variables(self):
@@ -97,9 +143,9 @@ class TPsimplex:
             for j in i:
                 if j == '>=':
                     count += 1
-                    
+
         k=0
-        num=0
+        num = 0
         for i in self.equation:
             coeff_variable.append([])
             var = 1
@@ -113,9 +159,10 @@ class TPsimplex:
                     basic_variable.append('S' + str(k + 1))
                     opti_F.append(0)
                 elif j=='>=':
-                    num+=1
-                    #for l in range(k):
+                    #for l in range(p):
                         #coeff_variable[k].append(0)
+                    #coeff_variable[k].append(-1)
+                    num+=1
                     if num > 1:
                         for i in range(num - 1):
                             coeff_variable[k].append(0)
@@ -130,6 +177,7 @@ class TPsimplex:
                     variabls.append('A'+str(k+1))
                     basic_variable.append('A' + str(k + 1))
                     self.artificial_var.append('A' + str(k + 1))
+
                 elif j=='=':
                     additional_varialbe[k].pop(k - 1)
                     additional_varialbe[k].insert(k, 1)
@@ -214,6 +262,29 @@ class TPsimplex:
                     print(j, end='  ')
             print('\r')
 
+        if self.do_write:
+            file=open(self.file_name,'w')
+            file.write('STARTING SIMPLEX TABLE\n\n')
+            for i in self.variable:
+                file.write(str(i))
+                file.write('\t')
+
+            file.write('\n')
+
+            for i in whole_matrix:
+                for j in i:
+                    try:
+                        file.write(str(round(j,3)))
+                    except:
+                        file.write(str(j))
+                    file.write('\t')
+
+                file.write('\n')
+
+            file.close()
+
+
+
 
     def __make_proper_matrix(self,coeff_var)->list:
         max=0
@@ -245,38 +316,70 @@ class TPsimplex:
                     self.main_matrix[0][j]=self.main_matrix[0][j]+k
 
         print('\n\nINITIAL SIMPLEX TABLE\n')
-        self.__print_matrix()
+        self.__print_matrix(msg='INITIAL SIMPLEX TABLE')
         self.__process_simplex_phase_1()
 
 
-    def __print_matrix(self):
+    def __print_matrix(self,msg):
         for i in self.variable:
-            print(i,end=' ')
+            print(i,end='\t  ')
         print()
         p=0
         for i in self.main_matrix:
-            print(self.basic_var[p],end='  ')
+            print(self.basic_var[p],end='\t')
             for j in i:
                 if j>=0:
-                    print(round(j,3),end='  ')
+                    print(" "+str(round(j,3)),end='\t')
                 elif j<0:
-                    print(round(j,3),end='  ')
+                    print(round(j,3),end='\t')
             p+=1
             print()
+
+        if self.do_write:
+            file=open(self.file_name,'a')
+            file.write('\n\n'+msg+'\n')
+            for i in self.variable:
+                file.write(str(i))
+                file.write('\t\t  ')
+            file.write('\n')
+            p = 0
+            for i in self.main_matrix:
+                file.write(self.basic_var[p])
+                file.write('\t\t')
+                for j in i:
+                    if j >= 0:
+                        file.write(" "+str(round(j,3)))
+                        file.write('\t\t')
+                    elif j < 0:
+                        file.write(str(round(j,3)))
+                        file.write('\t\t')
+                p += 1
+                file.write('\n')
+
+            file.close()
+
 
 
     def __process_simplex_phase_1(self):
         print('\n\nPHASE-1\n')
+        if self.do_write:
+            file=open(self.file_name,'a')
+            file.write('\n\nPHASE 1\n')
+            file.close()
         while not self.__check_for_optimal_table():
             self.__find_entry_indx()
             self.__find_leaving_indx()
-            self.__set_enter_and_leave_val()
-
-            if self.itr>100:
-                raise TimeoutError("Too many iteration found!")
-
+            if self.__set_enter_and_leave_val()==False:
+                return
+            if self.itr>=100:
+                self.msg="\nCannot find solution"
+                self.error=True
+                return
         print('\n\nPHASE-2\n')
-        self.__process_simplex_phase_2()
+        if not self.error:
+            self.__process_simplex_phase_2()
+        else:
+            return
 
 
     def __check_for_optimal_table(self,type='1_phase')->bool:
@@ -284,7 +387,7 @@ class TPsimplex:
             f=[self.main_matrix[0][i]  for i in range(len(self.main_matrix[0])-1)]
 
             for i in f:
-                if i>0:
+                if i>1e-05:
                     return False
             return True
         elif type=='min':
@@ -309,7 +412,7 @@ class TPsimplex:
         f=[]
         self.entering_indx=None
         if type=='1_phase':
-            max = 0
+            max = 1e-05
             for i,v in enumerate(matrix):
                 if i<len(self.coeff_of_var[0]):
                     f.append(v)
@@ -348,10 +451,9 @@ class TPsimplex:
             b = self.main_matrix[i][ln]
             x = self.main_matrix[i][self.entering_indx]
             if v in self.artificial_var:
-                if x!=0:
+                if x>0:
                     if (float(b/x)==min):
                         self.leaving_indx=i
-
 
 
     def __find_leaving_indx(self, type='1_phase'):
@@ -365,7 +467,9 @@ class TPsimplex:
             l=len(self.optimize_final)-1
             for k in self.main_matrix:
                 if self.entering_indx==None:
-                    raise Exception("\nNo solution Found!")
+                    self.error=True
+                    self.msg="\nNo Solution Exist!"
+                    return
                 x.append(k[self.entering_indx])
                 b.append(k[l])
 
@@ -385,7 +489,9 @@ class TPsimplex:
             l = len(self.main_matrix[0])-1
             for k in self.main_matrix:
                 if self.entering_indx == None:
-                    raise Exception("\nNo solution Found!")
+                    self.error = True
+                    self.msg = "\nNo Solution Exist!"
+                    return
                 x.append(k[self.entering_indx])
                 b.append(k[l])
 
@@ -403,8 +509,10 @@ class TPsimplex:
 
             l = len(self.main_matrix[0]) - 1
             for k in self.main_matrix:
-                if self.entering_indx == None:
-                    raise Exception("\nNo solution Found!")
+                if self.entering_indx==None:
+                    self.error=True
+                    self.msg="\nNo Solution Exist!"
+                    return
                 x.append(k[self.entering_indx])
                 b.append(k[l])
 
@@ -424,46 +532,43 @@ class TPsimplex:
         temp_index=0
         temp_list1=[]
         temp_list2=[]
+        if(self.leaving_indx==None):
+            self.error=True
+            self.msg="\nUnbounded solution found! {}"
+            return False
 
-        if self.entering_indx==None:
-            raise Exception("No solution Found")
+        if (self.entering_indx == None):
+            self.error = True
+            self.msg = "\nUnknown error occured!"
+            return False
+
         enter=self.variable[self.entering_indx+1]
-        if self.leaving_indx==None:
-            raise Exception("Unbounded Solution Found!!")
         leave=self.basic_var[self.leaving_indx]
         self.basic_var.pop(self.leaving_indx)
         self.basic_var.insert(self.leaving_indx,enter)
         for i,v in enumerate(self.variable):
             if v==leave:
                 temp_index=i-1
-
         for i in self.main_matrix:
             temp_list1.append(i[temp_index])
             temp_list2.append(i[self.entering_indx])
-
         for i in range(len(self.main_matrix)):
             self.main_matrix[i][self.entering_indx]=temp_list1[i]
-
-
         k=temp_list2[self.leaving_indx]
-
-
         for i,v in enumerate(self.main_matrix[self.leaving_indx]):
             if i!=self.entering_indx:
                 self.main_matrix[self.leaving_indx][i]=float(v/k)
-
         temp_leav_val_list=self.main_matrix[self.leaving_indx]
-
         for i,v in enumerate(self.main_matrix):
             if i!=self.leaving_indx:
                 m=temp_list2[i]*-1
                 for k,j in enumerate(v):
                     if k !=self.entering_indx:
                         self.main_matrix[i][k]=float(j+(m*temp_leav_val_list[k]))
-
         self.itr+=1
         print('\n\nITERATION {0}\n'.format(self.itr))
-        self.__print_matrix()
+        self.__print_matrix(msg='ITERATION '+str(self.itr))
+
 
 
     def __process_simplex_phase_2(self):
@@ -476,6 +581,8 @@ class TPsimplex:
                     pop_indx.append(length-1)
                     self.variable.pop(length)
             length-=1
+
+
 
         for i,v in enumerate(self.main_matrix):
             for j in pop_indx:
@@ -496,7 +603,7 @@ class TPsimplex:
         self.main_matrix.insert(0,F)
 
 
-        self.__print_matrix()
+        self.__print_matrix(msg='PHASE-2')
 
         temp_indx=[]
         z=[]
@@ -532,7 +639,7 @@ class TPsimplex:
         self.main_matrix[0]=F
 
         print('\n\nINITIAL SIMPLEX TABLE\n')
-        self.__print_matrix()
+        self.__print_matrix(msg='INITIAL SIMPLEX TABLE')
         self.__process_simplex_final_phase()
 
 
@@ -540,30 +647,37 @@ class TPsimplex:
         while not self.__check_for_optimal_table(type=self.optimize_type):
             self.__find_entry_indx(type=self.optimize_type)
             self.__find_leaving_indx(type=self.optimize_type)
-            self.__set_enter_and_leave_val()
+            if self.__set_enter_and_leave_val()==False:
+                return
             if self.itr>100:
-                raise TimeoutError("Too many iteration found")
+                self.msg="\nNo solution Found"
+                self.error=True
+                return
 
 
-    def Optimal_Solution(self)-> "numpy array":
+    def Optimal_Solution(self):
 
-        ln=len(self.main_matrix[0])-1
-        if self.main_matrix[0][ln]>0:
-            print("\n\n\nSOLUTION:\n")
-            self.__print_matrix()
-            final_solution=[['F',round(self.main_matrix[0][ln],3)]]
-            
-            inserted_var=[]
-            cost_coeff_var=['X'+str(i+1) for i in range(self.number_of_variables)]
-            for i,v in enumerate(self.basic_var):
-                if v in cost_coeff_var:
-                    final_solution.append([v,round(self.main_matrix[i][ln],3)])
-                    inserted_var.append(v)
+        if self.error==False:
+            ln=len(self.main_matrix[0])-1
+            if self.main_matrix[0][ln]>=0:
+                print("\n\n\nSOLUTION\n")
+                self.__print_matrix(msg='SOLUTION')
+                final_solution=[['F',round(self.main_matrix[0][ln],3)]]
 
-            for i in cost_coeff_var:
-                if i not in inserted_var:
-                    final_solution.append([i, round(0, 3)])
+                cost_coeff_var=['X'+str(i+1) for i in range(self.number_of_variables)]
 
-            return np.asarray(final_solution)
+                inserted_var=[]
+                for i,v in enumerate(self.basic_var):
+                    if v in cost_coeff_var:
+                        final_solution.append([v,round(self.main_matrix[i][ln],3)])
+                        inserted_var.append(v)
+
+                for i in cost_coeff_var:
+                    if i not in inserted_var:
+                        final_solution.append([i,round(0,3)])
+
+                return np.asarray(final_solution)
+            else:
+                return "\nNo Fisible solution found!!"
         else:
-            raise Exception("\n\nEither the equation have not fisible solution or an error occured.\n Please staceback to look for the issue, if you find this solution wrong you can create an issue here: \n https://github.com/Ashish2000L/linear_programing")
+            return self.msg

@@ -85,24 +85,33 @@ class graphical_method:
 
         if self.number_of_constrains == 2:
             plt.imshow((eqs[0] & eqs[1] & (x>=0) & (y>=0)).astype(int),
-                       extent=(x.min(), x.max(), y.min(), y.max()), origin="higher", cmap="Blues", alpha=0.3)
+                       extent=(x.min(), x.max(), y.min(), y.max()), origin="lower", cmap="Blues", alpha=0.3)
         elif self.number_of_constrains == 3:
             plt.imshow((eqs[0] & eqs[1] & eqs[2] & (x>=0) & (y>=0)).astype(int),
-                       extent=(x.min(), x.max(), y.min(), y.max()), origin="higher", cmap="Blues", alpha=0.3)
+                       extent=(x.min(), x.max(), y.min(), y.max()), origin="lower", cmap="Blues", alpha=0.3)
         elif self.number_of_constrains == 4:
             plt.imshow((eqs[0] & eqs[1] & eqs[2] & eqs[3] & (x>=0) & (y>=0)).astype(int),
-                       extent=(x.min(), x.max(), y.min(), y.max()), origin="higher", cmap="Blues", alpha=0.3)
+                       extent=(x.min(), x.max(), y.min(), y.max()), origin="lower", cmap="Blues", alpha=0.3)
         elif self.number_of_constrains == 5:
             plt.imshow((eqs[0] & eqs[1] & eqs[2] & eqs[3] & eqs[4] & (x>=0) & (y>=0)).astype(int),
-                       extent=(x.min(), x.max(), y.min(), y.max()), origin="higher", cmap="Blues", alpha=0.3)
+                       extent=(x.min(), x.max(), y.min(), y.max()), origin="lower", cmap="Blues", alpha=0.3)
         elif self.number_of_constrains == 6:
             plt.imshow((eqs[0] & eqs[1] & eqs[2] & eqs[3] & eqs[4] & eqs[5] & (x>=0) & (y>=0)).astype(int),
-                       extent=(x.min(), x.max(), y.min(), y.max()), origin="higher", cmap="Blues", alpha=0.3)
+                       extent=(x.min(), x.max(), y.min(), y.max()), origin="lower", cmap="Blues", alpha=0.3)
         else:
             raise ValueError("Out of range number of constrains, max number of constrains should be upto 6 ")
 
+        clr=0
         for i in range(max):
-            plt.plot(X[i], Y[i], colours[i], label=f"equation {i + 1}", linewidth=2)
+            try:
+                plt.plot(X[i], Y[i], colours[clr], label=f"equation {i + 1}", linewidth=2)
+            except:
+                clr=0
+                plt.plot(X[i], Y[i], colours[clr], label=f"equation {i + 1}", linewidth=2)
+            clr+=1
+
+
+
 
         plt.title('LPP Graphical Solution ')
         plt.xlabel('x-axis')
@@ -206,16 +215,18 @@ class graphical_method:
         i = 0
         sets = []
         while i < max_num:
-            if i < max_num - 1:
-                sets.append((i, i + 1))
-            else:
-                sets.append((max_num - 1, 0))
+            for j in range(i+1,max_num):
+                if i < max_num - 1:
+                    sets.append((i, j))
+                else:
+                    sets.append((max_num - 1, 0))
             i += 1
-
-        i = 0
+        i = len(x)
         for k in sets:
             setforeq = []
             setforrhs = []
+            x.append([])
+            y.append([])
             setforeq.append(eq[k[0]])
             setforeq.append(eq[k[1]])
             setforrhs.append(rhs[k[0]])
